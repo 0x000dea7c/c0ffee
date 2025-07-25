@@ -1,0 +1,12 @@
+#!/bin/bash
+
+files=$(git diff --cached --name-only | grep -E '\.(h|cpp)$')
+
+for file in $files; do
+    if grep -q "@NOCHECKIN" "$file"; then
+        echo "Error: Found '@NOCHECKIN' in $file. Commit rejected."
+        exit 1
+    fi
+done
+
+exit 0
