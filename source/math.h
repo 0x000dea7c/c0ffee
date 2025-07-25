@@ -3,6 +3,7 @@
 
 #include "types.h"
 #include <cmath>
+#include <cassert>
 
 namespace coffee {
 
@@ -11,7 +12,7 @@ f32 constexpr pi{ 3.14159265359f };
 
 inline f32 constexpr sqrt_f32(f32 value)
 {
-    return std::sqrt(value);
+    return std::sqrtf(value);
 }
 
 inline f32 constexpr cos_f32(f32 value)
@@ -62,12 +63,12 @@ struct Quaternion
     {
         f32 const magnitude = sqrtf(_w * _w + _x * _x + _y * _y + _z * _z);
 
-        if (magnitude > 1.0f) {
-            _w = _w / magnitude;
-            _x = _x / magnitude;
-            _y = _y / magnitude;
-            _z = _z / magnitude;
-        }
+        assert(magnitude > 1.0f);
+
+        _w = _w / magnitude;
+        _x = _x / magnitude;
+        _y = _y / magnitude;
+        _z = _z / magnitude;
     }
 
     f32 _w;
@@ -82,6 +83,7 @@ rotate_vector(Vector2& vector, Quaternion const& rotation)
     Quaternion const v(0.0f, vector._x, vector._y, 0.0f);
     Quaternion const inverse(rotation._w, -rotation._x, -rotation._y, -rotation._z);
     Quaternion const result = rotation * v * inverse;
+
     vector._x = result._x;
     vector._y = result._y;
 }

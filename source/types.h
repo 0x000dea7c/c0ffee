@@ -12,7 +12,7 @@ using f32 = float;
 using f64 = double;
 using u64 = std::uint64_t;
 using s64 = std::int64_t;
-using u8 = std::uint8_t;
+using u8  = std::uint8_t;
 using b32 = std::uint32_t;
 
 }; // namespace coffee

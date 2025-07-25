@@ -47,18 +47,20 @@ TEST_F(Quaternion_test, multiply_by_identity)
     EXPECT_NEAR(q._z, 4.0f, comparison_tolerance);
 }
 
-TEST_F(Quaternion_test, to_matrix)
-{
-}
-
 TEST_F(Quaternion_test, rotate_vector)
 {
     f32 angle = to_radians(90.0f);
-    Vector2 vector(1.0f, 0.0f);
+    Vector2 vector1(1.0f, 0.0f);
+    Vector2 vector2(0.0f, 1.0f);
     Quaternion rotation(cos_f32(angle / 2.0f), 0.0f, 0.0f, sin_f32(angle / 2.0f));
 
-    rotate_vector(vector, rotation);
+    rotate_vector(vector1, rotation);
 
-    EXPECT_NEAR(vector._x, 0.0f, comparison_tolerance);
-    EXPECT_NEAR(vector._y, 1.0f, comparison_tolerance);
+    EXPECT_NEAR(vector1._x, 0.0f, comparison_tolerance);
+    EXPECT_NEAR(vector1._y, 1.0f, comparison_tolerance);
+
+    rotate_vector(vector2, rotation);
+
+    EXPECT_NEAR(vector2._x, -1.0f, comparison_tolerance);
+    EXPECT_NEAR(vector2._y,  0.0f, comparison_tolerance);
 }

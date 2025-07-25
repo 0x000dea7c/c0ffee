@@ -1,10 +1,9 @@
 #include "physics.h"
 #include "renderer.h"
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
 
 void
-coffee::render(void* renderer, world& world)
+coffee::render(void* renderer, World& world)
 {
     SDL_Renderer* r = reinterpret_cast<SDL_Renderer*>(renderer);
 

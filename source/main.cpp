@@ -44,9 +44,9 @@ struct SDL_subsystem
 
 /// The game checks _is_pressed for continuous actions and _transitions for
 /// discrete actions. Two half transitions mean a single press in a frame.
-struct button_state
+struct Button_state
 {
-    button_state() : _is_pressed{ false }, _half_transition{ 0 }
+    Button_state() : _is_pressed{ false }, _half_transition{ 0 }
     {
     }
 
@@ -54,28 +54,28 @@ struct button_state
     u32 _half_transition;
 };
 
-struct player_input
+struct Player_input
 {
-    button_state _move_left;
-    button_state _move_right;
-    button_state _move_up;
-    button_state _action_shoot;
+    Button_state _move_left;
+    Button_state _move_right;
+    Button_state _move_up;
+    Button_state _action_shoot;
 };
 
-struct player
+struct Player
 {
-    player(player_input const& input)
+    Player(Player_input const& input)
       : _input{ input }, _health{ 100 }, _thrust{ 0.0f }
     {
     }
 
-    player_input _input;
+    Player_input _input;
     f32 _thrust;
     u32 _health;
 };
 
 void
-handle_input(player& player, world& world, f32 delta_time)
+handle_input(Player& player, World& world, f32 delta_time)
 {
     // Poll the keyboard state, it's supposed to be faster this way compared to
     // checking for events. TODO: I should benchmark this.
@@ -126,9 +126,9 @@ main()
     SDL_Event event;
     bool quit{ false };
     u64 last_time{ SDL_GetTicks() };
-    player_input input;
-    player player(input);
-    world world;
+    Player_input input;
+    Player player(input);
+    World world;
 
     // Add the player at the center
     world.add_entity(Vector2{ window_width / 2.0f, window_height / 2.0f },

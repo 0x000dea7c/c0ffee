@@ -8,6 +8,6 @@ namespace coffee {
 
 /// TODO: improve this interface!
 void
-render(void* renderer, world& world);
+render(void* renderer, World& world);
 
 };

@@ -9,9 +9,9 @@
 
 namespace coffee {
 
-struct world
+struct World
 {
-    world()
+    World()
     {
         _positions.reserve(1000);
         _velocities.reserve(1000);
@@ -19,7 +19,7 @@ struct world
     }
 
     void
-    add_entity(Vector2 position, Vector2 velocity, f32 rotation)
+    add_entity(Vector2 position, Vector2 velocity, Quaternion const& rotation)
     {
         if (_positions.size() == 1000) {
             std::cerr << "Exceeded maximum entities in the game\n";
@@ -28,15 +28,15 @@ struct world
 
         _positions.emplace_back(position);
         _velocities.emplace_back(velocity);
-        _rotations.push_back(rotation);
+        _rotations.emplace_back(rotation);
     }
 
     std::vector<Vector2> _positions;
     std::vector<Vector2> _velocities;
-    std::vector<f32> _rotations;
+    std::vector<Quaternion> _rotations;
 };
 
 void
-update(f32 delta_time, world& world);
+update(f32 delta_time, World& world);
 
 }; // namespace physics

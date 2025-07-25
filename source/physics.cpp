@@ -1,7 +1,7 @@
 #include "physics.h"
 
 void
-coffee::update(f32 delta_time, world& world)
+coffee::update(f32 delta_time, World& world)
 {
     for (u64 i {0}; i < world._positions.size(); ++i)
     {
