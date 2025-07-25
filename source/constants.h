@@ -10,6 +10,5 @@ f32 constexpr player_thrust_factor{ 0.01f };
 f32 constexpr player_rotation_factor{ 5.0f };
 s32 constexpr window_width{ 1920 };
 s32 constexpr window_height{ 1080 };
-f32 constexpr pi {3.1415926535f};
 
 };

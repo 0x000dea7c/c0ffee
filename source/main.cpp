@@ -96,11 +96,11 @@ handle_input(player& player, world& world, f32 delta_time)
 
     if (player._input._move_up._is_pressed) {
         player._thrust = player_thrust_factor;
-        world._velocities[player_id].x += std::cos(world._rotations[player_id]) * player._thrust;
-        world._velocities[player_id].y += std::sin(world._rotations[player_id]) * player._thrust;
+        world._velocities[player_id]._x += cosf(world._rotations[player_id]) * player._thrust;
+        world._velocities[player_id]._y += sinf(world._rotations[player_id]) * player._thrust;
     } else {
-        world._velocities[player_id].x = 0.0f;
-        world._velocities[player_id].y = 0.0f;
+        world._velocities[player_id]._x = 0.0f;
+        world._velocities[player_id]._y = 0.0f;
         player._thrust = 0.0f;
     }
 
@@ -131,8 +131,8 @@ main()
     world world;
 
     // Add the player at the center
-    world.add_entity(vector2d{ window_width / 2.0f, window_height / 2.0f },
-                     vector2d{ 0.0f, 0.0f },
+    world.add_entity(Vector2{ window_width / 2.0f, window_height / 2.0f },
+                     Vector2{ 0.0f, 0.0f },
                      0.0f);
 
     while (!quit) {

@@ -13,4 +13,6 @@ find_package(SDL3 REQUIRED)
 
 add_executable(coffee source/main.cpp)
 
+add_subdirectory(tests)
+
 target_link_libraries(coffee SDL3)

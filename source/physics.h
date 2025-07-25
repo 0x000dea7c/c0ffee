@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdlib>
 #include "types.h"
+#include "math.h"
 
 namespace coffee {
 
@@ -18,7 +19,7 @@ struct world
     }
 
     void
-    add_entity(vector2d position, vector2d velocity, f32 rotation)
+    add_entity(Vector2 position, Vector2 velocity, f32 rotation)
     {
         if (_positions.size() == 1000) {
             std::cerr << "Exceeded maximum entities in the game\n";
@@ -30,8 +31,8 @@ struct world
         _rotations.push_back(rotation);
     }
 
-    std::vector<vector2d> _positions;
-    std::vector<vector2d> _velocities;
+    std::vector<Vector2> _positions;
+    std::vector<Vector2> _velocities;
     std::vector<f32> _rotations;
 };
 

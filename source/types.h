@@ -15,10 +15,4 @@ using s64 = std::int64_t;
 using u8 = std::uint8_t;
 using b32 = std::uint32_t;
 
-struct vector2d
-{
-    f32 x;
-    f32 y;
-};
-
 }; // namespace coffee
