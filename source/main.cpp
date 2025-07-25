@@ -110,7 +110,6 @@ handle_input(player& player, world& world, f32 delta_time)
         player._input._action_shoot._is_pressed = keys[SDL_SCANCODE_SPACE];
     }
 
-    // test comment
     if (player._input._action_shoot._half_transition > 0 && player._input._action_shoot._is_pressed) {
         player._input._action_shoot._half_transition = 0;
     }
