@@ -3,7 +3,8 @@ include(GoogleTest)
 include_directories(${SOURCE_DIRECTORY})
 
 add_executable(tests
-  test_quaternions.cpp
+  test_matrix3.cpp
+  test_linear_algebra_operations.cpp
   main.cpp)
 
 gtest_discover_tests(tests)

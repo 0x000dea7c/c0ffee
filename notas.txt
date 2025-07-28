@@ -52,6 +52,11 @@ TODO
 - Estudiar optimizaciones posibles en las funciones de sin, cos,
   etc. ¿Usar look-up tables?
 
+- Implementar función log.
+
+- Mejorar nombres de los tests.
+
+- ¿Puedo implementar literales rad? ...
+
 DONE
 
-- Averiguar cómo representar las rotaciones con cuaterniones.
