@@ -1,42 +1,43 @@
 #include "entity_manager.h"
 #include "physics.h"
 #include "renderer.h"
+#include "constants.h"
 #include <cassert>
 
 using namespace coffee;
 
-Entity_Manager::Entity_Manager(World& world, Renderer_Data& renderer_data)
-  : _world(world)
-  , _renderer_data(renderer_data)
-  , _current_entity_id(0)
-  , _player_id(-1)
-{
-    _entities.reserve(1000);
+Entity_Manager::Entity_Manager(World& w, Renderer_Data& r)
+    : world(w), renderer_data(r) {
+    entities.reserve(game_maximum_entities);
+    free_ids.reserve(game_maximum_entities);
+
+    for (u64 i = 0; i < game_maximum_entities; ++i) {
+        free_ids.push_back(i);
+    }
 }
 
-void
-Entity_Manager::add_player(Add_Entity_World_Arguments const& arguments)
-{
-    // We blow up if we try adding two players.
-    assert(_player_id == -1 && _player_id < 999);
+void Entity_Manager::add_player(Add_Entity_World_Arguments const& arguments) {
+    u64 const player_id = free_ids.back();
 
-    _player_id = _current_entity_id++;
+    free_ids.pop_back();
 
-    _entities.push_back(_player_id);
+    entities.push_back(player_id);
 
-    _world.add_entity(arguments);
+    world.add_entity(arguments);
 
-    _renderer_data.add_entity();
+    renderer_data.add_entity();
 }
 
-void
-Entity_Manager::add_rock(Add_Entity_World_Arguments const& arguments)
-{
-    assert(_current_entity_id < 999);
+void Entity_Manager::add_rock(Add_Entity_World_Arguments const& arguments) {
+    assert(!free_ids.empty());
 
-    _entities.push_back(_current_entity_id++);
+    u64 const rock_id = free_ids.back();
 
-    _world.add_entity(arguments);
+    free_ids.pop_back();
 
-    _renderer_data.add_entity();
+    entities.push_back(rock_id);
+
+    world.add_entity(arguments);
+
+    renderer_data.add_entity();
 }

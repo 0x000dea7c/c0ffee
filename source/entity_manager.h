@@ -10,24 +10,18 @@ struct World;
 struct Renderer_Data;
 struct Add_Entity_World_Arguments;
 
-struct Entity_Manager
-{
+class Entity_Manager {
+    std::vector<u64> entities;
+    std::vector<u64> free_ids;
+    World& world;
+    Renderer_Data& renderer_data;
+
+public:
     Entity_Manager(World& world, Renderer_Data& renderer_data);
-
-    std::vector<u64> _entities;
-    World& _world;
-    Renderer_Data& _renderer_data;
-    u64 _current_entity_id;
-    s32 _player_id;
-
-    u64 get_player_id() const
-    {
-        return _entities[_player_id];
-    }
 
     void add_player(Add_Entity_World_Arguments const& arguments);
 
     void add_rock(Add_Entity_World_Arguments const& arguments);
 };
 
-}; // namespace coffee
+};

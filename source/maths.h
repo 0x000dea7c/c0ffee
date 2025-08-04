@@ -67,51 +67,51 @@ inline f32 constexpr to_radians(f32 degrees)
 
 struct Vector2
 {
-    constexpr Vector2() : _x(0.0f), _y(0.0f) {}
+    constexpr Vector2() : x(0.0f), y(0.0f) {}
 
-    constexpr Vector2(f32 x, f32 y) : _x(x), _y(y) { }
+    constexpr Vector2(f32 x1, f32 y1) : x(x1), y(y1) { }
 
     constexpr Vector2 operator+(Vector2 const& other) const {
-        return {_x + other._x, _y + other._y};
+        return {x + other.x, y + other.y};
     }
 
     constexpr Vector2 operator-(Vector2 const& other) const {
-        return {_x - other._x, _y - other._y};
+        return {x - other.x, y - other.y};
     }
 
     constexpr Vector2 operator*(Vector2 const& other) const {
-        return {_x * other._x, _y * other._y};
+        return {x * other.x, y * other.y};
     }
 
     constexpr Vector2 operator/(Vector2 const& other) const {
-        return {_x / other._x, _y / other._y};
+        return {x / other.x, y / other.y};
     }
 
     constexpr Vector2 operator*(f32 scale_factor) const {
-        return {_x * scale_factor, _y * scale_factor};
+        return {x * scale_factor, y * scale_factor};
     }
 
     void normalise() {
-        f32 const magnitude = sqrt_f32(square_f32(_x) + square_f32(_y));
-        _x /= magnitude;
-        _y /= magnitude;
+        f32 const magnitude = sqrt_f32(square_f32(x) + square_f32(y));
+        x /= magnitude;
+        y /= magnitude;
     }
 
-    f32 _x;
-    f32 _y;
+    f32 x;
+    f32 y;
 };
 
 inline f32 constexpr euclidean_distance_f32(Vector2 const& from, Vector2 const& to)
 {
-    return sqrt_f32(square_f32(to._x - from._x) + square_f32(to._y - from._y));
+    return sqrt_f32(square_f32(to.x - from.x) + square_f32(to.y - from.y));
 }
 
 inline Vector2
 rotate_vector(Vector2 const& input, f32 orientation_radians)
 {
     // https://en.wikipedia.org/wiki/Rotation_(mathematics)
-    return Vector2{ input._x * cos_f32(orientation_radians) - input._y * sin_f32(orientation_radians),
-                    input._x * sin_f32(orientation_radians) + input._y * cos_f32(orientation_radians) };
+    return Vector2{ input.x * cos_f32(orientation_radians) - input.y * sin_f32(orientation_radians),
+                    input.x * sin_f32(orientation_radians) + input.y * cos_f32(orientation_radians) };
 }
 
 struct Matrix3
@@ -123,8 +123,8 @@ struct Matrix3
     void set_translation(Vector2 const& position)
     {
         // We assume that the main diagonal is set up correctly.
-        set(2, 0, position._x);
-        set(2, 1, position._y);
+        set(2, 0, position.x);
+        set(2, 1, position.y);
         set(2, 2, 1);
     }
 
@@ -141,8 +141,8 @@ struct Matrix3
 
     Vector2 transform_vertex(Vector2 const& vertex)
     {
-        return Vector2(vertex._x * get(0, 0) + vertex._y * get(1, 0) + get(2, 0),
-                       vertex._x * get(0, 1) + vertex._y * get(1, 1) + get(2, 1));
+        return Vector2(vertex.x * get(0, 0) + vertex.y * get(1, 0) + get(2, 0),
+                       vertex.x * get(0, 1) + vertex.y * get(1, 1) + get(2, 1));
     }
 
     void set(u32 row, u32 column, f32 value)

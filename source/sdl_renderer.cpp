@@ -28,11 +28,9 @@ static constexpr s32 rock_indices[9] = {
     0, 3, 4  // Top, Bottom-left, Top-left.
 };
 
-void
-coffee::render(void* renderer, World& world, Renderer_Data& renderer_data, Entity_Manager& entity_manager)
+void coffee::render(void* renderer, World& world, Renderer_Data& renderer_data, Entity_Manager& entity_manager)
 {
     SDL_Renderer* r = reinterpret_cast<SDL_Renderer*>(renderer);
-    static u64 const player_id = entity_manager.get_player_id();
 
     SDL_SetRenderDrawColor(r, 0x0, 0x0, 0x0, 0x0);
     SDL_RenderClear(r);
@@ -43,13 +41,13 @@ coffee::render(void* renderer, World& world, Renderer_Data& renderer_data, Entit
 
         // @HACK: we're starting at 1 because the player id is 0. This is hacky.
         for (u64 i = 1; i < renderer_data._transforms.size(); ++i) {
-            renderer_data._transforms[i].set_translation(world._positions[i]);
-            renderer_data._transforms[i].set_orientation(world._orientations[i]);
+            renderer_data._transforms[i].set_translation(world.get_positions()[i]);
+            renderer_data._transforms[i].set_orientation(world.get_orientations()[i]);
 
             for (u64 j = 0; j < 5; ++j) {
                 Vector2 const world_position = renderer_data._transforms[i].transform_vertex(rock_vertices[j]);
-                vertices[j].position.x = world_position._x;
-                vertices[j].position.y = world_position._y;
+                vertices[j].position.x = world_position.x;
+                vertices[j].position.y = world_position.y;
                 vertices[j].color = { 200, 200, 200, 255 };
                 vertices[j].tex_coord = { 0.0f, 0.0f };
             }
@@ -60,15 +58,15 @@ coffee::render(void* renderer, World& world, Renderer_Data& renderer_data, Entit
 
     {
         // Render Player's spaceship.
-        renderer_data._transforms[player_id].set_translation(world._positions[player_id]);
-        renderer_data._transforms[player_id].set_orientation(world._orientations[player_id]);
+        renderer_data._transforms[0].set_translation(world.get_positions()[0]);
+        renderer_data._transforms[0].set_orientation(world.get_orientations()[0]);
 
         SDL_Vertex vertices[3];
 
         for (u64 j = 0; j < 3; ++j) {
-            Vector2 const world_position = renderer_data._transforms[player_id].transform_vertex(ship_vertices[j]);
-            vertices[j].position.x = world_position._x;
-            vertices[j].position.y = world_position._y;
+            Vector2 const world_position = renderer_data._transforms[0].transform_vertex(ship_vertices[j]);
+            vertices[j].position.x = world_position.x;
+            vertices[j].position.y = world_position.y;
             vertices[j].color = {255, 255, 255, 255};
             vertices[j].tex_coord = {0.0f, 0.0f};
         }

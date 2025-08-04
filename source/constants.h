@@ -12,5 +12,6 @@ f32 constexpr player_mass_kg = 100.0f;
 s32 constexpr window_width = 1920;
 s32 constexpr window_height = 1080;
 f32 constexpr rock_spawn_safe_distance_to_player = 200.0f;
+u64 constexpr game_maximum_entities = 1000;
 
 };
