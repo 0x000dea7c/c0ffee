@@ -11,7 +11,7 @@ coffee::update(f32 delta_time, World& world)
         world._velocities[i]._x += world._accelerations[i]._x * delta_time;
         world._velocities[i]._y += world._accelerations[i]._y * delta_time;
 
-        world._positions[i]._x  += world._velocities[i]._x * delta_time;
-        world._positions[i]._y  += world._velocities[i]._y * delta_time;
+        world._positions[i]._x += world._velocities[i]._x * delta_time;
+        world._positions[i]._y += world._velocities[i]._y * delta_time;
     }
 }

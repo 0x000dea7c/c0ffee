@@ -7,6 +7,14 @@
 
 namespace coffee {
 
+struct Add_Entity_World_Arguments
+{
+    Vector2 _position;
+    Vector2 _velocity;
+    Vector2 _acceleration;
+    f32 _orientation_radians;
+};
+
 struct World
 {
     World()
@@ -17,14 +25,12 @@ struct World
         _orientations.reserve(1000);
     }
 
-    void add_entity(Vector2 position, Vector2 velocity, Vector2 acceleration, f32 orientation_radians)
+    void add_entity(Add_Entity_World_Arguments const& arguments)
     {
-        assert(_positions.size() < 1000);
-
-        _positions.emplace_back(position);
-        _velocities.emplace_back(velocity);
-        _accelerations.emplace_back(acceleration);
-        _orientations.emplace_back(orientation_radians);
+        _positions.emplace_back(arguments._position);
+        _velocities.emplace_back(arguments._velocity);
+        _accelerations.emplace_back(arguments._acceleration);
+        _orientations.emplace_back(arguments._orientation_radians);
     }
 
     std::vector<Vector2> _positions;

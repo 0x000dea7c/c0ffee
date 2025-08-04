@@ -4,11 +4,46 @@
 #include "types.h"
 #include <cassert>
 #include <cmath>
+#include <random>
 
 namespace coffee {
 
-f32 constexpr comparison_tolerance{ 1e-4 }; // @XXX: this is pretty bad.
+f32 constexpr comparison_tolerance{ 1e-4 }; // @FIXME: this is pretty bad.
 f32 constexpr pi{ 3.14159265359f };
+
+inline f32 constexpr square_f32(f32 value)
+{
+    return value * value;
+}
+
+struct Random_Generator
+{
+    Random_Generator(u32 seed)
+        : _seed(seed)
+    {
+        _engine = std::mt19937(_seed);
+    }
+
+    f32 get_random_f32(f32 start, f32 end_inclusive) {
+        _real_distribution.param(std::uniform_real_distribution<f32>::param_type(start, end_inclusive));
+        return _real_distribution(_engine);
+    }
+
+    u64 get_random_s32(s32 start, s32 end_inclusive) {
+        _integer_distribution.param(std::uniform_int_distribution<s32>::param_type(start, end_inclusive));
+        return _integer_distribution(_engine);
+    }
+
+    u32 _seed;
+    std::mt19937 _engine;
+    std::uniform_real_distribution<f32> _real_distribution;
+    std::uniform_int_distribution<s32> _integer_distribution;
+};
+
+inline f32 constexpr abs_f32(f32 value)
+{
+    return std::fabs(value);
+}
 
 inline f32 constexpr sqrt_f32(f32 value)
 {
@@ -32,13 +67,44 @@ inline f32 constexpr to_radians(f32 degrees)
 
 struct Vector2
 {
-    constexpr Vector2(f32 x, f32 y) : _x{ x }, _y{ y }
-    {
+    constexpr Vector2() : _x(0.0f), _y(0.0f) {}
+
+    constexpr Vector2(f32 x, f32 y) : _x(x), _y(y) { }
+
+    constexpr Vector2 operator+(Vector2 const& other) const {
+        return {_x + other._x, _y + other._y};
+    }
+
+    constexpr Vector2 operator-(Vector2 const& other) const {
+        return {_x - other._x, _y - other._y};
+    }
+
+    constexpr Vector2 operator*(Vector2 const& other) const {
+        return {_x * other._x, _y * other._y};
+    }
+
+    constexpr Vector2 operator/(Vector2 const& other) const {
+        return {_x / other._x, _y / other._y};
+    }
+
+    constexpr Vector2 operator*(f32 scale_factor) const {
+        return {_x * scale_factor, _y * scale_factor};
+    }
+
+    void normalise() {
+        f32 const magnitude = sqrt_f32(square_f32(_x) + square_f32(_y));
+        _x /= magnitude;
+        _y /= magnitude;
     }
 
     f32 _x;
     f32 _y;
 };
+
+inline f32 constexpr euclidean_distance_f32(Vector2 const& from, Vector2 const& to)
+{
+    return sqrt_f32(square_f32(to._x - from._x) + square_f32(to._y - from._y));
+}
 
 inline Vector2
 rotate_vector(Vector2 const& input, f32 orientation_radians)
@@ -75,10 +141,8 @@ struct Matrix3
 
     Vector2 transform_vertex(Vector2 const& vertex)
     {
-        return Vector2(
-            vertex._x * get(0, 0) + vertex._y * get(1, 0) + get(2, 0),
-            vertex._x * get(0, 1) + vertex._y * get(1, 1) + get(2, 1)
-        );
+        return Vector2(vertex._x * get(0, 0) + vertex._y * get(1, 0) + get(2, 0),
+                       vertex._x * get(0, 1) + vertex._y * get(1, 1) + get(2, 1));
     }
 
     void set(u32 row, u32 column, f32 value)

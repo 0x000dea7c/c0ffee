@@ -3,9 +3,12 @@
 #pragma once
 
 #include "maths.h"
-#include "physics.h"
+#include <vector>
 
 namespace coffee {
+
+struct World;
+struct Entity_Manager;
 
 struct Renderer_Data
 {
@@ -24,6 +27,6 @@ struct Renderer_Data
 
 /// TODO: improve this interface!
 void
-render(void* renderer, World& world, Renderer_Data& renderer_data);
+render(void* renderer, World& world, Renderer_Data& renderer_data, Entity_Manager& entity_manager);
 
-};
+}; // namespace coffee
