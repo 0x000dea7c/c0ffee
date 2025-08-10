@@ -84,7 +84,7 @@ static void update_player(f32 delta_time) {
 }
 
 static void update_rocks(f32 delta_time) {
-    for (u64 i = 1; i < positions.size(); ++i) {
+    for(u64 i = 1; i < positions.size(); ++i) {
         velocities[i].x *= 1.0 - damping * delta_time;
         velocities[i].y *= 1.0 - damping * delta_time;
 
@@ -93,6 +93,16 @@ static void update_rocks(f32 delta_time) {
 
         positions[i].x += velocities[i].x * delta_time;
         positions[i].y += velocities[i].y * delta_time;
+
+        // If the rock is out of bounds, we need to remove it from the
+        // system.
+        if(positions[i].x - sizes[i].width < 0.0f || positions[i].x + sizes[i].width > window_width) {
+            remove_entity(i);
+        }
+
+        if(positions[i].y - sizes[i].height < 0.0f || positions[i].y + sizes[i].height > window_height) {
+            remove_entity(i);
+        }
     }
 }
 
@@ -186,7 +196,7 @@ static void spawn_rock() {
         // they don't go out of bounds after spawning.
         rock_position.x = get_random_real_number(0, window_width - 50.0f);
         rock_position.y = get_random_real_number(0, window_height - 50.0f);
-    } while (!rock_spawns_in_safe_position(rock_position, positions[0]));
+    } while(!rock_spawns_in_safe_position(rock_position, positions[0]));
 
     // Make the rock point to the player's space-ship.
     Vector2 rock_direction(rock_position);

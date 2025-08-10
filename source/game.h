@@ -55,3 +55,5 @@ void update(f32 delta_time);
 void render(void* renderer);
 
 void add_entity(Add_Entity_Arguments const& args);
+
+void remove_entity(u64 entity_id);
