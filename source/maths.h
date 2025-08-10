@@ -10,19 +10,19 @@ inline f32 constexpr square(f32 value) {
     return value * value;
 }
 
-inline f32 constexpr abs(f32 value) {
+inline f32 constexpr absolute_value(f32 value) {
     return value < 0 ? -value : value;
 }
 
-inline f32 constexpr sqrt(f32 value) {
+inline f32 constexpr square_root(f32 value) {
     return std::sqrtf(value);
 }
 
-inline f32 constexpr cos(f32 value) {
+inline f32 constexpr cosine(f32 value) {
     return std::cosf(value);
 }
 
-inline f32 constexpr sin(f32 value) {
+inline f32 constexpr sine(f32 value) {
     return std::sinf(value);
 }
 
@@ -63,8 +63,8 @@ struct Vector2 {
     }
 
     void rotate(f32 orientation) {
-        f32 new_x = x * cos(orientation) - y * sin(orientation);
-        f32 new_y = x * sin(orientation) + y * cos(orientation);
+        f32 new_x = x * cosine(orientation) - y * sine(orientation);
+        f32 new_y = x * sine(orientation) + y * cosine(orientation);
         x = new_x;
         y = new_y;
     }
@@ -76,8 +76,7 @@ struct Vector2 {
 // ---------------------------------------------------------
 
 inline f32 constexpr euclidean_distance(Vector2 const& from, Vector2 const& to) {
-    // @NOTE: from and to are points in the plane.
-    return sqrt(square(to.x - from.x) + square(to.y - from.y));
+    return square_root(square(to.x - from.x) + square(to.y - from.y));
 }
 
 struct Matrix3 {
@@ -91,8 +90,8 @@ struct Matrix3 {
     }
 
     void set_orientation(f32 orientation_radians) {
-        f32 const cos_theta = cos(orientation_radians);
-        f32 const sin_theta = sin(orientation_radians);
+        f32 const cos_theta = cosine(orientation_radians);
+        f32 const sin_theta = sine(orientation_radians);
 
         set(0, 0,  cos_theta);
         set(0, 1, -sin_theta);

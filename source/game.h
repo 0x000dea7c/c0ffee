@@ -52,8 +52,10 @@ void handle_input(f32 delta_time);
 
 void update(f32 delta_time);
 
-void render(void* renderer);
+void render(f32 delta_time, void* renderer);
 
 void add_entity(Add_Entity_Arguments const& args);
 
 void remove_entity(u64 entity_id);
+
+void draw_text(Vector2 const& position, char const* text, void* renderer);

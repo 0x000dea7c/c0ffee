@@ -4,7 +4,6 @@
 #include "types.h"
 #include "maths.h"
 #include "constants.h"
-
 #include "game.cpp"
 #include "random.cpp"
 
@@ -27,6 +26,7 @@ void log(char const* fmt, ...) {
 
 void initialise() {
     initialise_random_system(SDL_GetTicks());
+
     positions.reserve(game_maximum_entities);
     accelerations.reserve(game_maximum_entities);
     velocities.reserve(game_maximum_entities);
@@ -94,14 +94,11 @@ static void update_rocks(f32 delta_time) {
         positions[i].x += velocities[i].x * delta_time;
         positions[i].y += velocities[i].y * delta_time;
 
-        // If the rock is out of bounds, we need to remove it from the
-        // system.
-        if(positions[i].x - sizes[i].width < 0.0f || positions[i].x + sizes[i].width > window_width) {
+        // If the rock is out of bounds, we need to remove it from the system.
+        if(positions[i].x - sizes[i].width < 0.0f  || positions[i].x + sizes[i].width > window_width ||
+           positions[i].y - sizes[i].height < 0.0f || positions[i].y + sizes[i].height > window_height) {
             remove_entity(i);
-        }
-
-        if(positions[i].y - sizes[i].height < 0.0f || positions[i].y + sizes[i].height > window_height) {
-            remove_entity(i);
+            --i;
         }
     }
 }
@@ -111,7 +108,7 @@ void update(f32 delta_time) {
     update_rocks(delta_time);
 }
 
-void render(void* renderer_ptr) {
+void render(f32 delta_time, void* renderer_ptr) {
     static constexpr Vector2 ship_vertices[3] = {
         // Local coordinates, a triangle. Are these local coordinates, though?
         Vector2( 50.0f,   0.0f), // Nose (forward).
@@ -134,7 +131,7 @@ void render(void* renderer_ptr) {
         0, 3, 4  // Top, Bottom-left, Top-left.
     };
 
-    SDL_Renderer* renderer = reinterpret_cast<SDL_Renderer*>(renderer_ptr);
+    SDL_Renderer* renderer = static_cast<SDL_Renderer*>(renderer_ptr);
 
     SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0x0, 0x0);
     SDL_RenderClear(renderer);
@@ -192,8 +189,6 @@ static void spawn_rock() {
     Vector2 rock_position;
 
     do {
-        // @TODO: we want to spawn rocks far from the corners so that
-        // they don't go out of bounds after spawning.
         rock_position.x = get_random_real_number(0, window_width - 50.0f);
         rock_position.y = get_random_real_number(0, window_height - 50.0f);
     } while(!rock_spawns_in_safe_position(rock_position, positions[0]));
@@ -304,7 +299,7 @@ int main() {
             accumulator -= fixed_delta_time;
         }
 
-        render(sdl_subsystem.renderer);
+        render(delta_time, sdl_subsystem.renderer);
 
         // Avoid CPU overuse.
         u64 const end_frame_time = SDL_GetTicks();

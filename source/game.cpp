@@ -1,5 +1,7 @@
 #include "game.h"
 
+#include <cassert>
+
 void add_entity(Add_Entity_Arguments const& args) {
     positions.emplace_back(args.position);
     accelerations.emplace_back(args.acceleration);
@@ -10,9 +12,14 @@ void add_entity(Add_Entity_Arguments const& args) {
 }
 
 void remove_entity(u64 entity_id) {
-    if(positions.size() == 2) {
-        // There's only the rock that was deleted and the player. In
-        // this case we only need to pop.
+    if (entity_id >= positions.size()) {
+        log("Invalid entity_id: %u, size: %u\n", entity_id, positions.size());
+        assert(false && "how did this happen?");
+    }
+
+    u64 last_entity_id = positions.size() - 1;
+
+    if (entity_id == last_entity_id) {
         positions.pop_back();
         accelerations.pop_back();
         velocities.pop_back();
@@ -22,12 +29,14 @@ void remove_entity(u64 entity_id) {
         return;
     }
 
-    std::swap(positions[entity_id], positions[positions.size() - 1]);
-    std::swap(accelerations[entity_id], accelerations[accelerations.size() - 1]);
-    std::swap(velocities[entity_id], velocities[velocities.size() - 1]);
-    std::swap(orientations[entity_id], orientations[orientations.size() - 1]);
-    std::swap(sizes[entity_id], sizes[sizes.size() - 1]);
-    std::swap(transforms[entity_id], transforms[transforms.size() - 1]);
+    log("Removing entity: %u and swapping it with %u\n", entity_id, last_entity_id);
+
+    std::swap(positions[entity_id], positions[last_entity_id]);
+    std::swap(accelerations[entity_id], accelerations[last_entity_id]);
+    std::swap(velocities[entity_id], velocities[last_entity_id]);
+    std::swap(orientations[entity_id], orientations[last_entity_id]);
+    std::swap(sizes[entity_id], sizes[last_entity_id]);
+    std::swap(transforms[entity_id], transforms[last_entity_id]);
 
     positions.pop_back();
     accelerations.pop_back();

@@ -12,4 +12,4 @@ find_package(SDL3 REQUIRED)
 
 add_executable(coffee source/main.cpp)
 
-target_link_libraries(coffee SDL3)
+target_link_libraries(coffee SDL3 SDL3_ttf)
