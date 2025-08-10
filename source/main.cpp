@@ -7,6 +7,8 @@
 #include "game.cpp"
 #include "random.cpp"
 
+static bool g_draw_obb = false;
+
 void log(char const* fmt, ...) {
     std::vector<char> buffer(512);
 
@@ -41,6 +43,12 @@ void handle_input(f32 delta_time, Player& player) {
     player.input.move_left.is_pressed = keys[SDL_SCANCODE_LEFT];
     player.input.move_right.is_pressed = keys[SDL_SCANCODE_RIGHT];
     player.input.move_up.is_pressed = keys[SDL_SCANCODE_UP];
+
+    static bool d_was_pressed_before = false;
+    if(keys[SDL_SCANCODE_D] && !d_was_pressed_before) {
+        g_draw_obb = !g_draw_obb;
+    }
+    d_was_pressed_before = keys[SDL_SCANCODE_D];
 
     if(player.input.move_left.is_pressed) {
         orientations[0] = orientations[0] + player_rotation_factor * delta_time;
@@ -112,8 +120,8 @@ void render(f32 delta_time, void* renderer_ptr) {
     static constexpr Vector2 ship_vertices[3] = {
         // Local coordinates, a triangle. Are these local coordinates, though?
         Vector2( 50.0f,   0.0f), // Nose (forward).
-        Vector2(-20.0f,  25.0f), // Left base.
-        Vector2(-20.0f, -25.0f), // Right base.
+        Vector2(-45.0f,  25.0f), // Left base.
+        Vector2(-45.0f, -25.0f), // Right base.
     };
 
     static constexpr Vector2 rock_vertices[5] = { // @TODO: Have random values here?
@@ -154,6 +162,29 @@ void render(f32 delta_time, void* renderer_ptr) {
                 vertices[j].tex_coord = {0.0f, 0.0f};
             }
 
+            if(g_draw_obb) {
+                Vector2 const obb_vertices_local_space[4] = {
+                    Vector2(-sizes[i].width, -sizes[i].height), // Bottom left.
+                    Vector2( sizes[i].width, -sizes[i].height), // Bottom right.
+                    Vector2( sizes[i].width,  sizes[i].height), // Top right.
+                    Vector2(-sizes[i].width,  sizes[i].height), // Top left.
+                };
+
+                SDL_FPoint obb_world_space[4];
+
+                for (u32 j = 0; j < 4; ++j) {
+                    Vector2 world_position = transforms[i].transform_vertex(obb_vertices_local_space[j]);
+                    obb_world_space[j].x = world_position.x;
+                    obb_world_space[j].y = world_position.y;
+                }
+
+                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red for OBB.
+                SDL_RenderLine(renderer, obb_world_space[0].x, obb_world_space[0].y, obb_world_space[1].x, obb_world_space[1].y);
+                SDL_RenderLine(renderer, obb_world_space[1].x, obb_world_space[1].y, obb_world_space[2].x, obb_world_space[2].y);
+                SDL_RenderLine(renderer, obb_world_space[2].x, obb_world_space[2].y, obb_world_space[3].x, obb_world_space[3].y);
+                SDL_RenderLine(renderer, obb_world_space[3].x, obb_world_space[3].y, obb_world_space[0].x, obb_world_space[0].y);
+            }
+
             SDL_RenderGeometry(renderer, nullptr, vertices, 5, rock_indices, 9);
         }
     }
@@ -173,6 +204,29 @@ void render(f32 delta_time, void* renderer_ptr) {
             vertices[j].position.y = world_position.y;
             vertices[j].color = {255, 255, 255, 255};
             vertices[j].tex_coord = {0.0f, 0.0f};
+        }
+
+        if(g_draw_obb) {
+            Vector2 const obb_vertices_local_space[4] = {
+                Vector2(-sizes[0].width, -sizes[0].height), // Bottom left.
+                Vector2( sizes[0].width, -sizes[0].height), // Bottom right.
+                Vector2( sizes[0].width,  sizes[0].height), // Top right.
+                Vector2(-sizes[0].width,  sizes[0].height), // Top left.
+            };
+
+            SDL_FPoint obb_world_space[4];
+
+            for (u32 j = 0; j < 4; ++j) {
+                Vector2 world_position = transforms[0].transform_vertex(obb_vertices_local_space[j]);
+                obb_world_space[j].x = world_position.x;
+                obb_world_space[j].y = world_position.y;
+            }
+
+            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // Green for OBB.
+            SDL_RenderLine(renderer, obb_world_space[0].x, obb_world_space[0].y, obb_world_space[1].x, obb_world_space[1].y);
+            SDL_RenderLine(renderer, obb_world_space[1].x, obb_world_space[1].y, obb_world_space[2].x, obb_world_space[2].y);
+            SDL_RenderLine(renderer, obb_world_space[2].x, obb_world_space[2].y, obb_world_space[3].x, obb_world_space[3].y);
+            SDL_RenderLine(renderer, obb_world_space[3].x, obb_world_space[3].y, obb_world_space[0].x, obb_world_space[0].y);
         }
 
         SDL_RenderGeometry(renderer, nullptr, vertices, 3, nullptr, 0);
@@ -201,7 +255,7 @@ static void spawn_rock() {
     Vector2 rock_acceleration(rock_direction);
     rock_acceleration = rock_acceleration * 100.0f;
 
-    OBB rock_size(55.0f, 50.0f);
+    OBB rock_size(35.0f, 35.0f);
 
     Add_Entity_Arguments const rock_arguments = {
         .transform    = Matrix3(),
