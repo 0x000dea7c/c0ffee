@@ -35,7 +35,7 @@ struct Player_Input {
     Button_State move_left;
     Button_State move_right;
     Button_State move_up;
-    Button_State action_shoot;
+    Button_State shoot;
 };
 
 struct Player {
@@ -47,10 +47,6 @@ struct Player {
 void log(char const* fmt, ...);
 
 void initialise();
-
-void handle_input(f32 delta_time);
-
-void update(f32 delta_time);
 
 void render(f32 delta_time, void* renderer);
 

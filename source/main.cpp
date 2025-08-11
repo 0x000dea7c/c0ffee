@@ -10,6 +10,35 @@
 
 static bool g_draw_obb = false;
 
+static constexpr Vector2 ship_vertices[3] = {
+    // Local coordinates, a triangle. Are these local coordinates, though?
+    Vector2( 50.0f,   0.0f), // Nose (forward).
+    Vector2(-45.0f,  25.0f), // Left base.
+    Vector2(-45.0f, -25.0f), // Right base.
+};
+
+static constexpr Vector2 rock_vertices[5] = { // @TODO: Have random values here?
+    // Local coordinates, a pentagon. Are these local coordinates, though?
+    Vector2( 30.0f,  0.0f), // Top.
+    Vector2( 0.0f, -25.0f), // Top-left.
+    Vector2(-25.0f, -5.0f), // Bottom-left.
+    Vector2(-10.0f, 20.0f), // Bottom-right.
+    Vector2( 20.0f, 25.0f), // Top-right.
+};
+
+static constexpr s32 rock_indices[9] = {
+    0, 1, 2, // Top, Top-right, Bottom-right.
+    0, 2, 3, // Top, Bottom-right, Bottom-left.
+    0, 3, 4  // Top, Bottom-left, Top-left.
+};
+
+static constexpr Vector2 missile_vertices[4] = {
+    Vector2(-missile_width / 2.0f, -missile_height / 2.0f), // Bottom-left.
+    Vector2( missile_width / 2.0f, -missile_height / 2.0f), // Bottom-right.
+    Vector2( missile_width / 2.0f,  missile_height / 2.0f), // Top-right.
+    Vector2(-missile_width / 2.0f,  missile_height / 2.0f), // Top-left.
+};
+
 void log(char const* fmt, ...) {
     std::vector<char> buffer(512);
 
@@ -38,19 +67,41 @@ void initialise() {
     transforms.reserve(game_maximum_entities);
 }
 
-void handle_input(f32 delta_time, Player& player) {
-    bool const* keys = SDL_GetKeyboardState(nullptr);
+static void spawn_missile() {
+    // Spawn the missile at the tip of the space-ship. We need to use the orientation for that.
+    // spawn point: rotate_vector(positions[0] + sizes[0].width, orientations[0]).
+    // define width and height (thin but long).
+}
 
-    player.input.move_left.is_pressed = keys[SDL_SCANCODE_LEFT];
-    player.input.move_right.is_pressed = keys[SDL_SCANCODE_RIGHT];
-    player.input.move_up.is_pressed = keys[SDL_SCANCODE_UP];
-
-    static bool d_was_pressed_before = false;
-    if(keys[SDL_SCANCODE_D] && !d_was_pressed_before) {
-        g_draw_obb = !g_draw_obb;
+void handle_input(f32 delta_time, Player& player, SDL_Event event) {
+    if(event.type == SDL_EVENT_KEY_DOWN) {
+        if(event.key.key == SDLK_LEFT) {
+            player.input.move_left.is_pressed = true;
+        } else if(event.key.key == SDLK_RIGHT) {
+            player.input.move_right.is_pressed = true;
+        } else if(event.key.key == SDLK_UP) {
+            player.input.move_up.is_pressed = true;
+        } else if(event.key.key == SDLK_SPACE) {
+            player.input.shoot.is_pressed = true;
+            ++player.input.shoot.half_transition;
+        } else if(event.key.key == SDLK_D) {
+            g_draw_obb = !g_draw_obb;
+        }
+    } else if(event.type == SDL_EVENT_KEY_UP) {
+        if(event.key.key == SDLK_LEFT) {
+            player.input.move_left.is_pressed = false;
+        } else if(event.key.key == SDLK_RIGHT) {
+            player.input.move_right.is_pressed = false;
+        } else if(event.key.key == SDLK_UP) {
+            player.input.move_up.is_pressed = false;
+        } else if(event.key.key == SDLK_SPACE) {
+            player.input.shoot.is_pressed = false;
+            ++player.input.shoot.half_transition;
+        }
     }
-    d_was_pressed_before = keys[SDL_SCANCODE_D];
+}
 
+static void update_player(f32 delta_time, Player& player) {
     if(player.input.move_left.is_pressed) {
         orientations[0] = orientations[0] + player_rotation_factor * delta_time;
     }
@@ -67,9 +118,12 @@ void handle_input(f32 delta_time, Player& player) {
     } else {
         accelerations[0].x = accelerations[0].y = 0.0f;
     }
-}
 
-static void update_player(f32 delta_time) {
+    if(player.input.shoot.half_transition > 0 && player.input.shoot.is_pressed) {
+        player.input.shoot.half_transition = 0;
+        spawn_missile();
+    }
+
     velocities[0].x *= 1.0 - damping * delta_time;
     velocities[0].y *= 1.0 - damping * delta_time;
 
@@ -129,35 +183,13 @@ static void handle_collisions(f32 delta_time) {
     }
 }
 
-void update(f32 delta_time) {
-    update_player(delta_time);
+void update(f32 delta_time, Player& player) {
+    update_player(delta_time, player);
     update_rocks(delta_time);
     handle_collisions(delta_time);
 }
 
 void render(f32 delta_time, void* renderer_ptr) {
-    static constexpr Vector2 ship_vertices[3] = {
-        // Local coordinates, a triangle. Are these local coordinates, though?
-        Vector2( 50.0f,   0.0f), // Nose (forward).
-        Vector2(-45.0f,  25.0f), // Left base.
-        Vector2(-45.0f, -25.0f), // Right base.
-    };
-
-    static constexpr Vector2 rock_vertices[5] = { // @TODO: Have random values here?
-        // Local coordinates, a pentagon. Are these local coordinates, though?
-        Vector2( 30.0f,  0.0f), // Top.
-        Vector2( 0.0f, -25.0f), // Top-left.
-        Vector2(-25.0f, -5.0f), // Bottom-left.
-        Vector2(-10.0f, 20.0f), // Bottom-right.
-        Vector2( 20.0f, 25.0f), // Top-right.
-    };
-
-    static constexpr s32 rock_indices[9] = {
-        0, 1, 2, // Top, Top-right, Bottom-right.
-        0, 2, 3, // Top, Bottom-right, Bottom-left.
-        0, 3, 4  // Top, Bottom-left, Top-left.
-    };
-
     SDL_Renderer* renderer = static_cast<SDL_Renderer*>(renderer_ptr);
 
     SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0x0, 0x0);
@@ -359,6 +391,10 @@ int main() {
                 quit = true;
                 break;
             }
+
+            if(event.type == SDL_EVENT_KEY_DOWN || event.type == SDL_EVENT_KEY_UP) {
+                handle_input(fixed_delta_time, player, event);
+            }
         }
 
         if(rock_spawn_time < current_time) {
@@ -367,12 +403,11 @@ int main() {
         }
 
         while(accumulator >= fixed_delta_time) {
-            handle_input(delta_time, player);
-            update(delta_time);
+            update(fixed_delta_time, player);
             accumulator -= fixed_delta_time;
         }
 
-        render(delta_time, sdl_subsystem.renderer);
+        render(fixed_delta_time, sdl_subsystem.renderer);
 
         // Avoid CPU overuse.
         u64 const end_frame_time = SDL_GetTicks();
