@@ -69,6 +69,10 @@ struct Vector2 {
         y = new_y;
     }
 
+    f32 dot(Vector2 const& other) const {
+        return x * other.x + y * other.y;
+    }
+
     f32 x;
     f32 y;
 };
@@ -79,8 +83,22 @@ inline f32 constexpr euclidean_distance(Vector2 const& from, Vector2 const& to) 
     return square_root(square(to.x - from.x) + square(to.y - from.y));
 }
 
+// To avoid computing the square root for quick computations.
+inline f32 constexpr euclidean_distance_squared(Vector2 const& from, Vector2 const& to) {
+    return square(to.x - from.x) + square(to.y - from.y);
+}
+
 struct Matrix3 {
     Matrix3() : _elements{1.0f, 0.0, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f} {}
+
+    Matrix3 get_rotation() const {
+        Matrix3 rotation;
+        rotation.set(0, 0, get(0, 0));
+        rotation.set(0, 1, get(0, 1));
+        rotation.set(1, 0, get(1, 0));
+        rotation.set(1, 1, get(1, 1));
+        return rotation;
+    }
 
     void set_translation(Vector2 const& position) {
         // We assume that the main diagonal is set up correctly.
@@ -110,6 +128,12 @@ struct Matrix3 {
 
     f32 get(u32 row, u32 column) const {
         return _elements[row * 3 + column];
+    }
+
+    Vector2 operator*(Vector2 const& other) const {
+        return Vector2(
+            get(0, 0) * other.x + get(0, 1) * other.y,
+            get(1, 0) * other.x + get(1, 1) * other.y);
     }
 
     alignas(16) f32 _elements[9];

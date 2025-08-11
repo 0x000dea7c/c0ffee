@@ -6,6 +6,7 @@
 #include "constants.h"
 #include "game.cpp"
 #include "random.cpp"
+#include "collisions.cpp"
 
 static bool g_draw_obb = false;
 
@@ -111,9 +112,27 @@ static void update_rocks(f32 delta_time) {
     }
 }
 
+static void handle_collisions(f32 delta_time) {
+    for(u64 i = 1; i < positions.size(); ++i) {
+        f32 const distance_between_player_and_rock_squared = euclidean_distance_squared(positions[0], positions[i]);
+        f32 const max_distance = sizes[0].width + sizes[0].height + sizes[i].width + sizes[i].height; // Just an estimation.
+
+        if(distance_between_player_and_rock_squared > square(max_distance)) {
+            continue;
+        }
+
+        if(intersects(sizes[0], transforms[0], sizes[i], transforms[i])) {
+            // log("Collision!!!");
+            remove_entity(i);
+            --i;
+        }
+    }
+}
+
 void update(f32 delta_time) {
     update_player(delta_time);
     update_rocks(delta_time);
+    handle_collisions(delta_time);
 }
 
 void render(f32 delta_time, void* renderer_ptr) {
@@ -172,7 +191,7 @@ void render(f32 delta_time, void* renderer_ptr) {
 
                 SDL_FPoint obb_world_space[4];
 
-                for (u32 j = 0; j < 4; ++j) {
+                for(u32 j = 0; j < 4; ++j) {
                     Vector2 world_position = transforms[i].transform_vertex(obb_vertices_local_space[j]);
                     obb_world_space[j].x = world_position.x;
                     obb_world_space[j].y = world_position.y;
@@ -216,7 +235,7 @@ void render(f32 delta_time, void* renderer_ptr) {
 
             SDL_FPoint obb_world_space[4];
 
-            for (u32 j = 0; j < 4; ++j) {
+            for(u32 j = 0; j < 4; ++j) {
                 Vector2 world_position = transforms[0].transform_vertex(obb_vertices_local_space[j]);
                 obb_world_space[j].x = world_position.x;
                 obb_world_space[j].y = world_position.y;
