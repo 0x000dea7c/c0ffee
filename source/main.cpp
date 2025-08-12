@@ -77,6 +77,7 @@ void initialise() {
 static void spawn_missile() {
     static OBB const missile_size(missile_width, missile_height);
 
+    // @TODO: the missile orientation and position is wrong when it spawns!
     Vector2 missile_start_position(positions[0].x + sizes[0].width + missile_width / 2.0f,
                                    positions[0].y); // Centroid.
 
@@ -105,30 +106,28 @@ static void spawn_missile() {
 }
 
 void handle_input(f32 delta_time, Player& player, SDL_Event event) {
-    if(event.type == SDL_EVENT_KEY_DOWN) {
-        if(event.key.key == SDLK_LEFT) {
-            player.input.move_left.is_pressed = true;
-        } else if(event.key.key == SDLK_RIGHT) {
-            player.input.move_right.is_pressed = true;
-        } else if(event.key.key == SDLK_UP) {
-            player.input.move_up.is_pressed = true;
-        } else if(event.key.key == SDLK_SPACE) {
-            player.input.shoot.is_pressed = true;
-            ++player.input.shoot.half_transition;
-        } else if(event.key.key == SDLK_D) {
+    bool const key_down = event.type == SDL_EVENT_KEY_DOWN;
+
+    switch(event.key.key) {
+    case SDLK_LEFT:
+        player.input.move_left.is_pressed = key_down;
+        break;
+    case SDLK_RIGHT:
+        player.input.move_right.is_pressed = key_down;
+        break;
+    case SDLK_UP:
+        player.input.move_up.is_pressed = key_down;
+        break;
+    case SDLK_SPACE:
+        // @TODO: add delay between missiles!
+        player.input.shoot.is_pressed = key_down;
+        ++player.input.shoot.half_transition;
+        break;
+    case SDLK_D:
+        if(key_down) {
             g_draw_obb = !g_draw_obb;
         }
-    } else if(event.type == SDL_EVENT_KEY_UP) {
-        if(event.key.key == SDLK_LEFT) {
-            player.input.move_left.is_pressed = false;
-        } else if(event.key.key == SDLK_RIGHT) {
-            player.input.move_right.is_pressed = false;
-        } else if(event.key.key == SDLK_UP) {
-            player.input.move_up.is_pressed = false;
-        } else if(event.key.key == SDLK_SPACE) {
-            player.input.shoot.is_pressed = false;
-            ++player.input.shoot.half_transition;
-        }
+        break;
     }
 }
 
@@ -199,6 +198,7 @@ static void update_common(f32 delta_time) {
 }
 
 static void handle_collisions(f32 delta_time) {
+    // @TODO: add collisions between missiles and rocks.
     // Player-Rocks.
     // Missiles-Rocks.
     for(u64 i = 1; i < positions.size(); ++i) {
@@ -214,7 +214,6 @@ static void handle_collisions(f32 delta_time) {
         }
 
         if(intersects(sizes[0], transforms[0], sizes[i], transforms[i])) {
-            log("Collision!");
             remove_entity(i);
             --i;
         }
