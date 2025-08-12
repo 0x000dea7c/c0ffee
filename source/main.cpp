@@ -39,8 +39,14 @@ static constexpr Vector2 missile_vertices[4] = {
     Vector2(-missile_width / 2.0f,  missile_height / 2.0f), // Top-left.
 };
 
+static constexpr s32 missile_indices[6] = {
+    0, 1,
+    2, 0,
+    2, 3,
+};
+
 void log(char const* fmt, ...) {
-    std::vector<char> buffer(512);
+    static std::vector<char> buffer(512);
 
     va_list args;
     va_start(args, fmt);
@@ -65,12 +71,37 @@ void initialise() {
     orientations.reserve(game_maximum_entities);
     sizes.reserve(game_maximum_entities);
     transforms.reserve(game_maximum_entities);
+    types.reserve(game_maximum_entities);
 }
 
 static void spawn_missile() {
-    // Spawn the missile at the tip of the space-ship. We need to use the orientation for that.
-    // spawn point: rotate_vector(positions[0] + sizes[0].width, orientations[0]).
-    // define width and height (thin but long).
+    static OBB const missile_size(missile_width, missile_height);
+
+    Vector2 missile_start_position(positions[0].x + sizes[0].width + missile_width / 2.0f,
+                                   positions[0].y); // Centroid.
+
+    // missile_start_position.rotate(orientations[0]); // SDL3 coordinate system.
+    log("ship orientation = %.2f", orientations[0]);
+
+    Vector2 missile_direction(missile_start_position - positions[0]);
+    missile_direction.normalise();
+
+    Vector2 missile_acceleration(missile_direction);
+    missile_acceleration = missile_acceleration * 200.0f;
+
+    Add_Entity_Arguments const missile_arguments = {
+        .transform    = Matrix3(),
+        .size         = missile_size,
+        .position     = missile_start_position,
+        .velocity     = Vector2(100.0f, 100.0f),
+        .acceleration = missile_acceleration,
+        .entity_type  = Entity_Type::Missile,
+        .orientation  = orientations[0],
+    };
+
+    log("Spawning missile at (%.2f, %.2f)", missile_start_position.x, missile_start_position.y);
+
+    add_entity(missile_arguments);
 }
 
 void handle_input(f32 delta_time, Player& player, SDL_Event event) {
@@ -146,7 +177,8 @@ static void update_player(f32 delta_time, Player& player) {
     }
 }
 
-static void update_rocks(f32 delta_time) {
+static void update_common(f32 delta_time) {
+    // Updates all entities that have motion.
     for(u64 i = 1; i < positions.size(); ++i) {
         velocities[i].x *= 1.0 - damping * delta_time;
         velocities[i].y *= 1.0 - damping * delta_time;
@@ -157,7 +189,7 @@ static void update_rocks(f32 delta_time) {
         positions[i].x += velocities[i].x * delta_time;
         positions[i].y += velocities[i].y * delta_time;
 
-        // If the rock is out of bounds, we need to remove it from the system.
+        // If the entity is out of bounds, we need to remove it from the system.
         if(positions[i].x - sizes[i].width < 0.0f  || positions[i].x + sizes[i].width > window_width ||
            positions[i].y - sizes[i].height < 0.0f || positions[i].y + sizes[i].height > window_height) {
             remove_entity(i);
@@ -167,7 +199,13 @@ static void update_rocks(f32 delta_time) {
 }
 
 static void handle_collisions(f32 delta_time) {
+    // Player-Rocks.
+    // Missiles-Rocks.
     for(u64 i = 1; i < positions.size(); ++i) {
+        if(types[i] == Entity_Type::Missile) {
+            continue;
+        }
+
         f32 const distance_between_player_and_rock_squared = euclidean_distance_squared(positions[0], positions[i]);
         f32 const max_distance = sizes[0].width + sizes[0].height + sizes[i].width + sizes[i].height; // Just an estimation.
 
@@ -176,7 +214,7 @@ static void handle_collisions(f32 delta_time) {
         }
 
         if(intersects(sizes[0], transforms[0], sizes[i], transforms[i])) {
-            // log("Collision!!!");
+            log("Collision!");
             remove_entity(i);
             --i;
         }
@@ -185,8 +223,128 @@ static void handle_collisions(f32 delta_time) {
 
 void update(f32 delta_time, Player& player) {
     update_player(delta_time, player);
-    update_rocks(delta_time);
+    update_common(delta_time);
     handle_collisions(delta_time);
+}
+
+static void render_player(SDL_Renderer* renderer) {
+    SDL_Vertex vertices[3];
+
+    transforms[0].set_translation(positions[0]);
+    transforms[0].set_orientation(orientations[0]);
+
+    for(u64 j = 0; j < 3; ++j) {
+        Vector2 const world_position = transforms[0].transform_vertex(ship_vertices[j]);
+        vertices[j].position.x = world_position.x;
+        vertices[j].position.y = world_position.y;
+        vertices[j].color = {255, 255, 255, 255};
+        vertices[j].tex_coord = {0.0f, 0.0f};
+    }
+
+    if(g_draw_obb) {
+        Vector2 const obb_vertices_local_space[4] = {
+            Vector2(-sizes[0].width, -sizes[0].height), // Bottom left.
+            Vector2( sizes[0].width, -sizes[0].height), // Bottom right.
+            Vector2( sizes[0].width,  sizes[0].height), // Top right.
+            Vector2(-sizes[0].width,  sizes[0].height), // Top left.
+        };
+
+        SDL_FPoint obb_world_space[4];
+
+        for(u32 j = 0; j < 4; ++j) {
+            Vector2 world_position = transforms[0].transform_vertex(obb_vertices_local_space[j]);
+            obb_world_space[j].x = world_position.x;
+            obb_world_space[j].y = world_position.y;
+        }
+
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // Green for OBB.
+        SDL_RenderLine(renderer, obb_world_space[0].x, obb_world_space[0].y, obb_world_space[1].x, obb_world_space[1].y);
+        SDL_RenderLine(renderer, obb_world_space[1].x, obb_world_space[1].y, obb_world_space[2].x, obb_world_space[2].y);
+        SDL_RenderLine(renderer, obb_world_space[2].x, obb_world_space[2].y, obb_world_space[3].x, obb_world_space[3].y);
+        SDL_RenderLine(renderer, obb_world_space[3].x, obb_world_space[3].y, obb_world_space[0].x, obb_world_space[0].y);
+    }
+
+    SDL_RenderGeometry(renderer, nullptr, vertices, 3, nullptr, 0);
+}
+
+static void render_rock(SDL_Renderer* renderer, u64 i) {
+    SDL_Vertex vertices[5];
+
+    transforms[i].set_translation(positions[i]);
+    transforms[i].set_orientation(orientations[i]);
+
+    for(u64 j = 0; j < 5; ++j) {
+        Vector2 const world_position = transforms[i].transform_vertex(rock_vertices[j]);
+        vertices[j].position.x = world_position.x;
+        vertices[j].position.y = world_position.y;
+        vertices[j].color = {200, 200, 200, 255};
+        vertices[j].tex_coord = {0.0f, 0.0f};
+    }
+
+    if(g_draw_obb) {
+        Vector2 const obb_vertices_local_space[4] = {
+            Vector2(-sizes[i].width, -sizes[i].height), // Bottom left.
+            Vector2( sizes[i].width, -sizes[i].height), // Bottom right.
+            Vector2( sizes[i].width,  sizes[i].height), // Top right.
+            Vector2(-sizes[i].width,  sizes[i].height), // Top left.
+        };
+
+        SDL_FPoint obb_world_space[4];
+
+        for(u32 j = 0; j < 4; ++j) {
+            Vector2 world_position = transforms[i].transform_vertex(obb_vertices_local_space[j]);
+            obb_world_space[j].x = world_position.x;
+            obb_world_space[j].y = world_position.y;
+        }
+
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red for OBB.
+        SDL_RenderLine(renderer, obb_world_space[0].x, obb_world_space[0].y, obb_world_space[1].x, obb_world_space[1].y);
+        SDL_RenderLine(renderer, obb_world_space[1].x, obb_world_space[1].y, obb_world_space[2].x, obb_world_space[2].y);
+        SDL_RenderLine(renderer, obb_world_space[2].x, obb_world_space[2].y, obb_world_space[3].x, obb_world_space[3].y);
+        SDL_RenderLine(renderer, obb_world_space[3].x, obb_world_space[3].y, obb_world_space[0].x, obb_world_space[0].y);
+    }
+
+    SDL_RenderGeometry(renderer, nullptr, vertices, 5, rock_indices, 9);
+}
+
+static void render_missile(SDL_Renderer* renderer, u64 i) {
+    SDL_Vertex vertices[4];
+
+    transforms[i].set_translation(positions[i]);
+    transforms[i].set_orientation(orientations[i]);
+
+    for(u64 j = 0; j < 4; ++j) {
+        Vector2 const world_position = transforms[i].transform_vertex(missile_vertices[j]);
+        vertices[j].position.x = world_position.x;
+        vertices[j].position.y = world_position.y;
+        vertices[j].color = {200, 200, 200, 255};
+        vertices[j].tex_coord = {0.0f, 0.0f};
+    }
+
+    if(g_draw_obb) {
+        Vector2 const obb_vertices_local_space[4] = {
+            Vector2(-sizes[i].width, -sizes[i].height), // Bottom left.
+            Vector2( sizes[i].width, -sizes[i].height), // Bottom right.
+            Vector2( sizes[i].width,  sizes[i].height), // Top right.
+            Vector2(-sizes[i].width,  sizes[i].height), // Top left.
+        };
+
+        SDL_FPoint obb_world_space[4];
+
+        for(u32 j = 0; j < 4; ++j) {
+            Vector2 world_position = transforms[i].transform_vertex(obb_vertices_local_space[j]);
+            obb_world_space[j].x = world_position.x;
+            obb_world_space[j].y = world_position.y;
+        }
+
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red for OBB.
+        SDL_RenderLine(renderer, obb_world_space[0].x, obb_world_space[0].y, obb_world_space[1].x, obb_world_space[1].y);
+        SDL_RenderLine(renderer, obb_world_space[1].x, obb_world_space[1].y, obb_world_space[2].x, obb_world_space[2].y);
+        SDL_RenderLine(renderer, obb_world_space[2].x, obb_world_space[2].y, obb_world_space[3].x, obb_world_space[3].y);
+        SDL_RenderLine(renderer, obb_world_space[3].x, obb_world_space[3].y, obb_world_space[0].x, obb_world_space[0].y);
+    }
+
+    SDL_RenderGeometry(renderer, nullptr, vertices, 4, missile_indices, 6);
 }
 
 void render(f32 delta_time, void* renderer_ptr) {
@@ -195,92 +353,23 @@ void render(f32 delta_time, void* renderer_ptr) {
     SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0x0, 0x0);
     SDL_RenderClear(renderer);
 
-    // ---------------------
-    // Render the rocks.
-    // --------------------
-    {
-        SDL_Vertex vertices[5];
-
-        for(u64 i = 1; i < transforms.size(); ++i) {
-            transforms[i].set_translation(positions[i]);
-            transforms[i].set_orientation(orientations[i]);
-
-            for(u64 j = 0; j < 5; ++j) {
-                Vector2 const world_position = transforms[i].transform_vertex(rock_vertices[j]);
-                vertices[j].position.x = world_position.x;
-                vertices[j].position.y = world_position.y;
-                vertices[j].color = {200, 200, 200, 255};
-                vertices[j].tex_coord = {0.0f, 0.0f};
-            }
-
-            if(g_draw_obb) {
-                Vector2 const obb_vertices_local_space[4] = {
-                    Vector2(-sizes[i].width, -sizes[i].height), // Bottom left.
-                    Vector2( sizes[i].width, -sizes[i].height), // Bottom right.
-                    Vector2( sizes[i].width,  sizes[i].height), // Top right.
-                    Vector2(-sizes[i].width,  sizes[i].height), // Top left.
-                };
-
-                SDL_FPoint obb_world_space[4];
-
-                for(u32 j = 0; j < 4; ++j) {
-                    Vector2 world_position = transforms[i].transform_vertex(obb_vertices_local_space[j]);
-                    obb_world_space[j].x = world_position.x;
-                    obb_world_space[j].y = world_position.y;
-                }
-
-                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red for OBB.
-                SDL_RenderLine(renderer, obb_world_space[0].x, obb_world_space[0].y, obb_world_space[1].x, obb_world_space[1].y);
-                SDL_RenderLine(renderer, obb_world_space[1].x, obb_world_space[1].y, obb_world_space[2].x, obb_world_space[2].y);
-                SDL_RenderLine(renderer, obb_world_space[2].x, obb_world_space[2].y, obb_world_space[3].x, obb_world_space[3].y);
-                SDL_RenderLine(renderer, obb_world_space[3].x, obb_world_space[3].y, obb_world_space[0].x, obb_world_space[0].y);
-            }
-
-            SDL_RenderGeometry(renderer, nullptr, vertices, 5, rock_indices, 9);
+    // @TODO: benchmark this. Maybe sorting vectors based on their
+    // entity type is a good idea to avoid cache misses.
+    for(u64 i = 0; i < transforms.size(); ++i) {
+        switch(types[i]) {
+        case Entity_Type::Player:
+            render_player(renderer);
+            break;
+        case Entity_Type::Rock:
+            render_rock(renderer, i);
+            break;
+        case Entity_Type::Missile:
+            render_missile(renderer, i);
+            break;
+        default:
+            log("Unknown entity type.");
+            assert(false && "Unknown entity type.");
         }
-    }
-
-    // ---------------------
-    // Render the player.
-    // --------------------
-    {
-        SDL_Vertex vertices[3];
-
-        transforms[0].set_translation(positions[0]);
-        transforms[0].set_orientation(orientations[0]);
-
-        for(u64 j = 0; j < 3; ++j) {
-            Vector2 const world_position = transforms[0].transform_vertex(ship_vertices[j]);
-            vertices[j].position.x = world_position.x;
-            vertices[j].position.y = world_position.y;
-            vertices[j].color = {255, 255, 255, 255};
-            vertices[j].tex_coord = {0.0f, 0.0f};
-        }
-
-        if(g_draw_obb) {
-            Vector2 const obb_vertices_local_space[4] = {
-                Vector2(-sizes[0].width, -sizes[0].height), // Bottom left.
-                Vector2( sizes[0].width, -sizes[0].height), // Bottom right.
-                Vector2( sizes[0].width,  sizes[0].height), // Top right.
-                Vector2(-sizes[0].width,  sizes[0].height), // Top left.
-            };
-
-            SDL_FPoint obb_world_space[4];
-
-            for(u32 j = 0; j < 4; ++j) {
-                Vector2 world_position = transforms[0].transform_vertex(obb_vertices_local_space[j]);
-                obb_world_space[j].x = world_position.x;
-                obb_world_space[j].y = world_position.y;
-            }
-
-            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // Green for OBB.
-            SDL_RenderLine(renderer, obb_world_space[0].x, obb_world_space[0].y, obb_world_space[1].x, obb_world_space[1].y);
-            SDL_RenderLine(renderer, obb_world_space[1].x, obb_world_space[1].y, obb_world_space[2].x, obb_world_space[2].y);
-            SDL_RenderLine(renderer, obb_world_space[2].x, obb_world_space[2].y, obb_world_space[3].x, obb_world_space[3].y);
-            SDL_RenderLine(renderer, obb_world_space[3].x, obb_world_space[3].y, obb_world_space[0].x, obb_world_space[0].y);
-        }
-
-        SDL_RenderGeometry(renderer, nullptr, vertices, 3, nullptr, 0);
     }
 
     SDL_RenderPresent(renderer);
@@ -314,7 +403,8 @@ static void spawn_rock() {
         .position     = rock_position,
         .velocity     = Vector2(),
         .acceleration = rock_acceleration,
-        .orientation  = get_random_real_number(0.0f, 2.0f * pi)
+        .entity_type  = Entity_Type::Rock,
+        .orientation  = get_random_real_number(0.0f, 2.0f * pi),
     };
 
     add_entity(rock_arguments);
@@ -369,6 +459,7 @@ int main() {
         .position     = Vector2(window_width / 2.0f, window_height / 2.0f),
         .velocity     = Vector2(),
         .acceleration = Vector2(),
+        .entity_type  = Entity_Type::Player,
         .orientation  = 0.0f,
     };
 

@@ -15,5 +15,5 @@ char const*    game_title = "Coffee";
 f32  constexpr fixed_delta_time = 1.0f / 60.0f;
 f32  constexpr player_width = 50.0f;
 f32  constexpr player_height = 35.0f;
-f32  constexpr missile_width = 5.0f;
-f32  constexpr missile_height = 15.0f;
+f32  constexpr missile_width = 15.0f;
+f32  constexpr missile_height = 55.0f;

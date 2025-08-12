@@ -5,12 +5,19 @@
 #include "maths.h"
 #include "collisions.h"
 
+enum class Entity_Type {
+    Player,
+    Rock,
+    Missile,
+};
+
 std::vector<Vector2> positions; // Centroid of the entity.
 std::vector<Vector2> accelerations;
 std::vector<Vector2> velocities;
 std::vector<f32> orientations;
 std::vector<OBB> sizes;
 std::vector<Matrix3> transforms;
+std::vector<Entity_Type> types;
 
 struct Add_Entity_Arguments {
     Matrix3 transform;
@@ -18,6 +25,7 @@ struct Add_Entity_Arguments {
     Vector2 position;
     Vector2 velocity;
     Vector2 acceleration;
+    Entity_Type entity_type;
     f32 orientation;
 };
 
